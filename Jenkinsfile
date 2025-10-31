@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+             args '-u root'
+        }
+    }
 
     stages {
         stage('Dependances') {
