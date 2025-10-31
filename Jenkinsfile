@@ -6,8 +6,8 @@ pipeline {
             steps {
                 echo "🔧 Installation d'Apache2..."
                 sh '''
-                    sudo apt update -y
-                    sudo apt install -y apache2
+                    sudo apt update -y || true
+                    sudo apt install -y apache2 curl || true
                 '''
             }
         }
@@ -22,14 +22,23 @@ pipeline {
         stage('Backup') {
             steps {
                 echo "💾 Sauvegarde du répertoire..."
-                sh 'cp -r /var/www/html /var/www/html.backup  true'
+                sh '''
+                    if [ -d /var/www/html ]; then
+                        sudo cp -r /var/www/html /var/www/html.backup || true
+                    else
+                        echo "⚠️ Aucun répertoire à sauvegarder"
+                    fi
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
                 echo "🚀 Déploiement du site..."
-                sh 'cp -r * /var/www/html/'
+                sh '''
+                    sudo rm -rf /var/www/html/*
+                    sudo cp -r * /var/www/html/ || true
+                '''
             }
         }
 
@@ -37,9 +46,9 @@ pipeline {
             steps {
                 echo "🔍 Vérification..."
                 sh '''
-                    service apache2 start  true
+                    sudo service apache2 start || true
                     sleep 3
-                    curl -f http://localhost/  exit 1
+                    curl -f http://localhost/ || exit 1
                 '''
             }
         }
@@ -55,8 +64,8 @@ pipeline {
         always {
             echo "🧹 Nettoyage..."
             sh '''
-                sudo rm -rf /var/www/html/*
-                sudo apt remove -y apache2  true
+                sudo rm -rf /var/www/html/* || true
+                sudo apt remove -y apache2 || true
                 sudo apt autoremove -y || true
             '''
         }
