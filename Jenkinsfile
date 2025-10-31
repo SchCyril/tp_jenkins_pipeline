@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'ubuntu:22.04'
+            args '-u root'
+        }
+    }
 
     stages {
         stage('Dependances') {
@@ -7,7 +12,7 @@ pipeline {
                 echo "🔧 Installation d'Apache2..."
                 sh '''
                     apt update -y
-                    apt install -y apache2
+                    apt install -y apache2 curl
                 '''
             }
         }
@@ -22,14 +27,21 @@ pipeline {
         stage('Backup') {
             steps {
                 echo "💾 Sauvegarde du répertoire..."
-                sh 'cp -r /var/www/html /var/www/html.backup  true'
+                sh '''
+                    if [ -d /var/www/html ]; then
+                        cp -r /var/www/html /var/www/html.backup
+                    fi
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
                 echo "🚀 Déploiement du site..."
-                sh 'cp -r * /var/www/html/'
+                sh '''
+                    rm -rf /var/www/html/*
+                    cp -r * /var/www/html/
+                '''
             }
         }
 
@@ -37,9 +49,9 @@ pipeline {
             steps {
                 echo "🔍 Vérification..."
                 sh '''
-                    service apache2 start  true
+                    service apache2 start || true
                     sleep 3
-                    curl -f http://localhost/  exit 1
+                    curl -f http://localhost/ || exit 1
                 '''
             }
         }
@@ -56,7 +68,7 @@ pipeline {
             echo "🧹 Nettoyage..."
             sh '''
                 rm -rf /var/www/html/*
-                apt remove -y apache2  true
+                apt remove -y apache2 || true
                 apt autoremove -y || true
             '''
         }
