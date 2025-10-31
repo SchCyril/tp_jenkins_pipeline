@@ -1,17 +1,13 @@
 pipeline {
-    agent {
-        docker {
-             args '-u root'
-        }
-    }
+    agent any
 
     stages {
         stage('Dependances') {
             steps {
                 echo "🔧 Installation d'Apache2..."
                 sh '''
-                    apt update -y
-                    apt install -y apache2 curl
+                    sudo apt update -y
+                    sudo apt install -y apache2 curl
                 '''
             }
         }
@@ -38,8 +34,8 @@ pipeline {
             steps {
                 echo "🚀 Déploiement du site..."
                 sh '''
-                    rm -rf /var/www/html/*
-                    cp -r * /var/www/html/
+                    sudo rm -rf /var/www/html/*
+                    sudo cp -r * /var/www/html/
                 '''
             }
         }
@@ -66,9 +62,9 @@ pipeline {
         always {
             echo "🧹 Nettoyage..."
             sh '''
-                rm -rf /var/www/html/*
-                apt remove -y apache2 || true
-                apt autoremove -y || true
+                sudo rm -rf /var/www/html/*
+                sudo apt remove -y apache2 || true
+                sudo apt autoremove -y || true
             '''
         }
     }
